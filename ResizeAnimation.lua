@@ -268,13 +268,13 @@ function animate()
     
     if progress >= 1.0 then
         print("动画完成")
-        is_animating = false
         obs.timer_remove(animate)
-        obs.timer_add(update_size, 100)
-        
-        -- 如果启用弹跳效果，开始弹跳动画
-        if enable_bounce then
+
+        if enable_bounce and not is_bouncing then
             start_bounce_animation()
+        else
+            is_animating = false
+            obs.timer_add(update_size, 100)
         end
     end
 end
@@ -298,30 +298,28 @@ function bounce_animate()
     local current_time = obs.os_gettime_ns() / 1000000
     local elapsed_time = current_time - bounce_start_time
     local progress = math.min(elapsed_time / bounce_duration, 1.0)
-    
-    -- 使用正弦函数创建弹跳效果
-    local bounce_factor = math.sin(progress * math.pi * 4) * math.exp(-progress * 3)
+
+    local bounce_factor = math.sin(progress * math.pi) * math.exp(-progress * 3)
     local bounce_offset = 20 * bounce_factor
-    
+    if progress >= 1.0 then
+        bounce_offset = 0
+    end
+
     local current_width = target_width + bounce_offset
     local current_height = target_height + bounce_offset
-    
-    -- 计算位置（居中）
     local pos_x = (canvas_width / 2) - (current_width / 2)
     local pos_y = (canvas_height / 2) - (current_height / 2)
-    
-    -- 应用尺寸和位置
     resize_instance(current_width, current_height, pos_x, pos_y)
-    
-    -- 检查弹跳是否完成
+
     if progress >= 1.0 then
         print("弹跳动画完成")
-        is_bouncing = false
         obs.timer_remove(bounce_animate)
-        
-        -- 确保最终尺寸正确
         local final_pos_x = (canvas_width / 2) - (target_width / 2)
         local final_pos_y = (canvas_height / 2) - (target_height / 2)
         resize_instance(target_width, target_height, final_pos_x, final_pos_y)
+
+        is_animating = false
+        is_bouncing = false
+        obs.timer_add(update_size, 100)
     end
 end
